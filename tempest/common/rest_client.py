@@ -102,10 +102,18 @@ class RestClient(object):
             body = json.loads(body)
             raise exceptions.BadRequest(body['badRequest']['message'])
 
+        if resp.status == 404:
+            body = json.loads(body)
+            resource_not_found_msg = 'The resource could not be found'
+            if 'itemNotFound' in body:
+                raise exceptions.NotFound(body['itemNotFound']['message'])
+            elif resource_not_found_msg in body:
+                raise exceptions.ResourceNotFound()
+
         if resp.status == 413:
             body = json.loads(body)
             raise exceptions.OverLimit(body['overLimit']['message'])
-            
+
         if resp.status in (500, 501):
             body = json.loads(body)
             raise exceptions.ComputeFault(body['computeFault']['message'])
