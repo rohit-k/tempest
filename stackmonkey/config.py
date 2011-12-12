@@ -1,4 +1,5 @@
 import ConfigParser
+import os
 
 
 class NodeObject(object):
@@ -84,8 +85,15 @@ class NodesConfig(object):
 class HavocConfig(object):
     """Provides OpenStack multi-node configuration"""
 
-    def __init__(self, path=None):
+    def __init__(self, conf_dir, conf_file):
         """Initialize a configuration from a path."""
+
+        path = os.path.join(conf_dir, conf_file)
+
+        if not os.path.exists(path):
+            msg = "Config file %(path) not found" % locals()
+            raise RuntimeError(msg)
+
         self._conf = self.load_config(self._path)
         self.nodes = NodesConfig(self._conf)
 

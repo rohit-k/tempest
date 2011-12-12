@@ -1,4 +1,4 @@
-import sys
+import os
 import subprocess
 import config
 import exception
@@ -21,7 +21,7 @@ class HavocManager(object):
             self.DEFAULT_CONFIG_DIR)
         config_file = os.environ.get('HAVOC_CONFIG',
             self.DEFAULT_CONFIG_FILE)
-        self.config = config.HavocConfig()
+        self.config = config.HavocConfig(config_dir, config_file)
         self.nodes = self.config.nodes
         self.timeout = self.config.nodes.ssh_timeout
 
@@ -188,7 +188,7 @@ class PowerHavoc(HavocManager):
                                )
         result = obj.communicate()
         return_status = result[0].strip()
-        if power_off_status_msg in return_status:
+        if power_on_msg in return_status:
             return True
         return False
 
@@ -216,7 +216,6 @@ class PowerHavoc(HavocManager):
     def is_power_on(self):
         power_cmd = 'power status'
         power_on_status_msg = 'Chassis Power is on'
-        power_off_status_msg = 'Chassis Power is off'
         self.ipmi_cmd = 'ipmitool -I lan -H %s -U %s -P %s %s' % (
                                                            self.ipmi_host,
                                                            self.ipmi_user,
