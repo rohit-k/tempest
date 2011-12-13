@@ -1,7 +1,5 @@
 import json
-
 import httplib2
-
 from tempest import exceptions
 import tempest.config
 

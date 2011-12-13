@@ -4,7 +4,6 @@ from tempest.services.nova.json.images_client import ImagesClient
 from tempest.services.nova.json.flavors_client import FlavorsClient
 from tempest.services.nova.json.servers_client import ServersClient
 from tempest.services.nova.json.limits_client import LimitsClient
-from tempest.common.utils import data_utils
 import tempest.config
 
 

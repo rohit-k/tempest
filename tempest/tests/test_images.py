@@ -4,11 +4,9 @@ from tempest.common.utils.data_utils import rand_name
 import unittest2 as unittest
 import tempest.config
 
-# Some module-level skip conditions
-create_image_enabled = False
-
 
 class ImagesTest(unittest.TestCase):
+    create_image_enabled = tempest.config.env.create_image_enabled
 
     @classmethod
     def setUpClass(cls):
@@ -18,13 +16,12 @@ class ImagesTest(unittest.TestCase):
         cls.config = cls.os.config
         cls.image_ref = cls.config.env.image_ref
         cls.flavor_ref = cls.config.env.flavor_ref
-        create_image_enabled = cls.config.env.create_image_enabled
 
     def _parse_image_id(self, image_ref):
         temp = image_ref.rsplit('/')
         return temp[6]
 
-    @unittest.skipIf(not imaging_enabled,
+    @unittest.skipIf(not create_image_enabled,
                     'Environment unable to create images.')
     @attr(type='smoke')
     def test_create_delete_image(self):
