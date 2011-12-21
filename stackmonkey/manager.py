@@ -1,4 +1,5 @@
 import subprocess
+import shlex
 import exception
 import ssh
 import re
@@ -30,7 +31,7 @@ class HavocManager(object):
             raise
 
     def _run_cmd(self, client=None, command=None):
-        """Execute remote shell command"""
+        """Execute remote shell command, return output if successful"""
 
         try:
             if self.deploy_mode == 'devstack-local':
@@ -49,12 +50,30 @@ class HavocManager(object):
     def _is_service_running(self, client, service):
         """Checks if service is running"""
 
-        command = 'sudo service %s status' % service
-        output = self._run_cmd(client, command)
-        if 'start/running' in output:
-            return True
-        elif 'stop/waiting' in output:
+        if self.deploy_mode == 'devstack_local':
+            strip_grep = '[%s]' % service[0] + service[1:]
+            proc1 = subprocess.Popen(shlex.split('ps aux'),
+                                 stdout=subprocess.PIPE)
+
+            proc2 = subprocess.Popen(shlex.split('grep ' + strip_grep),
+                                stdin=proc1.stdout, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+
+            proc1.stdout.close()
+            out, err = proc2.communicate()
+            out = out.strip.split()
+            pid = out[1]
+            if pid:
+                return pid
             return False
+
+        elif self.deploy_mode == 'pkg-multi':
+            command = 'sudo service %s status' % service
+            output = self._run_cmd(client, command)
+            if 'start/running' in output:
+                return True
+            elif 'stop/waiting' in output:
+                return False
 
     def _is_process_running(self, client, process):
         """Checks if a process is running"""
@@ -66,25 +85,54 @@ class HavocManager(object):
             return True
         return False
 
+    def _get_service_root(self, service):
+        if 'nova' in service:
+            return 'nova'
+        elif 'glance' in service:
+            return 'glance'
+        else:
+            return service
+
     def service_action(self, client, service, action):
         """Perform the requested action on a service on remote host"""
 
-        if action == 'start':
-            if self._is_service_running(client, service):
-                return
+        # This block configures call to action for a local devstack setup
+        if self.deploy_mode == 'devstack_local':
+            run_status = self._is_service_running(client, service)
+            self.service_root = self._get_service_root(service)
 
-        elif action in ('stop', 'restart', 'reload', 'force-reload'):
-            if not self._is_service_running(client, service):
-                return
+            if action == 'start':
+                if run_status:
+                    return
 
-        elif action == 'status':
-            return self._is_service_running(client, service)
+            elif action in ('stop', 'restar', 'reload', 'force-reload'):
+                if not run_status:
+                    return
 
-        else:
-            raise exception.HavocException
+            else:
+                command = None
+                return subprocess.call()
 
-        command = 'service %s %s' % (service, action)
-        return self._run_cmd(client, command)
+        # This block configures call to action for a multi-node remote setup
+        elif self.deploy_mode == 'pkg-multi':
+            if action == 'start':
+                if run_status:
+                    return
+
+            elif action in ('stop', 'restart', 'reload', 'force-reload'):
+                if not run_status:
+                    return
+
+            elif action == 'status':
+                    return run_status
+
+            else:
+                command = 'service %s %s' % (service, action)
+                return self._run_cmd(client, command)
+
+        # This block configures call to action for a remote devsstack setup
+        elif self.deploy_mode == 'devstack-remote':
+            pass
 
     def process_action(self, client, process, action):
         if action == 'killall' and self._is_process_running(client, process):
@@ -92,20 +140,11 @@ class HavocManager(object):
             self._run_cmd(client, command)
             return not self._is_process_running(client, process)
 
-        if action == 'verify':
+        elif action == 'verify':
             return self._is_process_running(client, process)
 
-    def _get_instances(self, client, status):
-        """Uses kvm virsh to get a list of running or shutoff instances"""
-        command = 'virsh list --all'
-        instances = []
-        output = self._run_cmd(client, command)
-        dom_list = output.split('\n')
-        for item in dom_list:
-            if status in item:
-                match = re.findall(r'instance-\d+', item)
-                instances.extend(match)
-        return instances
+        else:
+            raise exception.HavocException
 
 
 class ControllerHavoc(HavocManager):
@@ -205,6 +244,18 @@ class ComputeHavoc(HavocManager):
         self.host = self.connect(self.host, self.username, self.password,
                                       self.timeout)
         self.terminated_instances = []
+
+    def _get_instances(self, client, status):
+        """Uses kvm virsh to get a list of running or shutoff instances"""
+        command = 'virsh list --all'
+        instances = []
+        output = self._run_cmd(client, command)
+        dom_list = output.split('\n')
+        for item in dom_list:
+            if status in item:
+                match = re.findall(r'instance-\d+', item)
+                instances.extend(match)
+        return instances
 
     def stop_nova_compute(self):
         return self.service_action(self.host, self.compute_service, 'stop')
