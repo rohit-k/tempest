@@ -2,13 +2,13 @@ import unittest2 as unittest
 from nose.plugins.attrib import attr
 from tempest import exceptions
 from tempest import openstack
-import tempest.config
 
 
 class FlavorsTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # Setup Client object for user with admin role
         cls.os = openstack.Manager()
         cls.client = cls.os.flavors_client
         cls.config = cls.os.config
@@ -121,3 +121,10 @@ class FlavorsTest(unittest.TestCase):
         params = {'minRam': flavors[1]['ram']}
         resp, flavors = self.client.list_flavors(params)
         self.assertFalse(any([i for i in flavors if i['id'] == flavor_id]))
+
+    @attr(type='negative')
+    def test_get_flavor_details_for_invalid_flavor_id(self):
+        """ Return error because way to specify is inappropriate """
+
+        self.assertRaises(exceptions.NotFound, self.client.get_flavor_details,
+                        9999)
