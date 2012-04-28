@@ -33,7 +33,7 @@ class BaseConfig(object):
 
     def get(self, item_name, default_value=None):
         try:
-            return self.conf.get(self.SECTION_NAME, item_name)
+            return self.conf.get(self.SECTION_NAME, item_name, raw=True)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
             return default_value
 
@@ -308,6 +308,65 @@ class NetworkConfig(BaseConfig):
         return self.get("api_version", "v1.1")
 
 
+class WhiteBoxConfig(BaseConfig):
+    """Provides configuration information required by white-box tests to access
+    OpenStack internals
+    """
+
+    SECTION_NAME = "whitebox"
+
+    @property
+    def openstack_deploy_mode(self):
+        """
+        Indicate how OpenStack services are deployed, whether using devstack
+        or package installation, on multiple remote nodes or on the single
+        localhost. Used by tests for running commands locally or remotely.
+        Allowed values are 'devstack-local, 'devstack-remote',
+        'package-multi'.
+        """
+        return self.get("openstack_deploy_mode", "devstack-local")
+
+    @property
+    def compute_db_uri(self):
+        """Connection string to the database of Compute service"""
+        return self.get("compute_db_uri")
+
+    @property
+    def glance_db_uri(self):
+        """Connection string to the database of Image Service"""
+        return self.get("glance_db_uri")
+
+    @property
+    def keystone_db_uri(self):
+        """Connection string to the database of Identity Service"""
+        return self.get("keystone_db_uri")
+
+    @property
+    def quantum_db_uri(self):
+        """Connection string to the database of Network Service"""
+        return self.get("quantum_db_uri")
+
+    @property
+    def compute_source_dir(self):
+        """Path of nova source directory"""
+        return self.get("compute_source_dir", "/opt/stack/nova")
+
+    @property
+    def compute_config_path(self):
+        """Path of nova configuration file"""
+        return self.get("compute_config_path", "/etc/nova/nova.conf")
+
+    @property
+    def compute_bin_dir(self):
+        """Directory containing nova binaries such as nova-manage"""
+        return self.get("compute_binary_dir", "/usr/local/bin/")
+
+    @property
+    def path_to_private_key(self):
+        """Path to a private key file for SSH access to remote hosts"""
+        return self.get("path_to_private_key")
+
+
 # TODO(jaypipes): Move this to a common utils (not data_utils...)
 def singleton(cls):
     """Simple wrapper for classes that should only have a single instance"""
@@ -356,6 +415,7 @@ class TempestConfig:
         self.identity_admin = IdentityAdminConfig(self._conf)
         self.images = ImagesConfig(self._conf)
         self.network = NetworkConfig(self._conf)
+        self.whitebox = WhiteBoxConfig(self._conf)
 
     def load_config(self, path):
         """Read configuration from given path and return a config object."""

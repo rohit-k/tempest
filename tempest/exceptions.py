@@ -47,6 +47,10 @@ class BuildErrorException(TempestException):
     message = "Server %(server_id)s failed to build and is in ERROR status"
 
 
+class ServerTerminateException(TempestException):
+    message = "Server %(server_id)s failed to terminate and is in ERROR status"
+
+
 class AddImageException(TempestException):
     message = "Image %(image_id) failed to become ACTIVE in the allotted time"
 
@@ -96,3 +100,7 @@ class SSHTimeout(TempestException):
 
 class ServerUnreachable(TempestException):
     message = "The server is not reachable via the configured network"
+
+
+class SQLException(TempestException):
+    message = "SQL error: %(message)s"

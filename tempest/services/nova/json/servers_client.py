@@ -153,7 +153,7 @@ class ServersClient(RestClient):
                 message += ' Current status: %s.' % server_status
                 raise exceptions.TimeoutException(message)
 
-    def wait_for_server_termination(self, server_id):
+    def wait_for_server_termination(self, server_id, initial_status='ACTIVE'):
         """Waits for server to reach termination"""
         start_time = int(time.time())
         while True:
@@ -162,9 +162,12 @@ class ServersClient(RestClient):
             except exceptions.NotFound:
                 return
 
-            server_status = body['status']
-            if server_status == 'ERROR':
-                raise exceptions.BuildErrorException
+            current_status = body['status']
+
+            # Raise an exception if server goes into ERROR after delete has
+            # been called
+            if current_status == 'ERROR' and initial_status != current_status:
+                raise exceptions.ServerTerminateException
 
             if int(time.time()) - start_time >= self.build_timeout:
                 raise exceptions.TimeoutException

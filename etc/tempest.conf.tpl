@@ -123,3 +123,29 @@ username = %IDENTITY_ADMIN_USERNAME%
 password = %IDENTITY_ADMIN_PASSWORD%
 # The above administrative user's tenant name
 tenant_name = %IDENTITY_ADMIN_TENANT_NAME%
+
+[whitebox]
+# This section contains configuration options for tests to get access to
+# internals and deployment of OpenStack infrastructure.
+#
+# This is the type of Openstack deployment, which could be either:
+# 'devstack-local' (default): Devstack running on same host as Tempest
+# 'devstack-remote': Devstack installation on hosts other than Tempest host
+# 'pkg-multi': Multi node package deployment
+openstack_deploy_mode = %WHITEBOX_OPENSTACK_DEPLOY_MODE%
+# Connection string to the database of Compute service
+compute_db_uri = %WHITEBOX_COMPUTE_DB_URI%
+# Connection string to the database of Image Service
+glance_db_uri = %WHITEBOX_GLANCE_DB_URI%
+# Connection string to the database of Identity Service
+keystone_db_uri = %WHITEBOX_KEYSTONE_DB_URI%
+# Connection string to the database of Network Service
+quantum_db_uri = %WHITEBOX_QUANTUM_DB_URI%
+# Path of nova source directory
+compute_source_dir = %WHITEBOX_COMPUTE_SOURCE_DIR%
+# Path of nova configuration file
+compute_config_path = %WHITEBOX_COMPUTE_CONFIG_PATH%
+# Directory containing nova binaries such as nova-manage
+compute_bin_dir = %WHITEBOX_COMPUTE_BIN_DIR%
+# Path to a private key file for SSH access to remote hosts
+path_to_private_key = %WHITEBOX_PATH_TO_PRIVATE_KEY%

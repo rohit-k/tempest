@@ -150,3 +150,29 @@ username = admin
 password = pass
 # The above administrative user's tenant name
 tenant_name = admin
+
+[whitebox]
+# This section contains configuration options for tests to get access to
+# internals and deployment of OpenStack infrastructure.
+#
+# This is the type of Openstack deployment, which is one of the following:
+# 'devstack-local' (default): Devstack running on same host as Tempest
+# 'devstack-remote': Devstack installation on hosts other than Tempest host
+# 'pkg-multi': Multi node package deployment
+openstack_deploy_mode = devstack_local
+# Connection string to the database of Compute service
+compute_db_uri = mysql:///user:pass@localhost/nova
+# Connection string to the database of Image Service
+glance_db_uri = mysql:///user:pass@localhost/glance
+# Connection string to the database of Identity Service
+keystone_db_uri = mysql:///user:pass@localhost/keystone
+# Connection string to the database of Network Service
+quantum_db_uri = mysql:///user:pass@localhost/ovs_quantum
+# Path of nova source directory
+compute_source_dir = /opt/stack/nova
+# Path of nova configuration file
+compute_config_path = /etc/nova/nova.conf
+# Directory containing nova binaries such as nova-manage
+compute_bin_dir = /usr/local/bin
+# Path to a private key file for SSH access to remote hosts
+path_to_private_key = /home/user/.ssh/id_rsa
