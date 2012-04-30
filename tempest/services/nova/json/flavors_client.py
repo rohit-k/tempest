@@ -55,11 +55,11 @@ class FlavorsClient(RestClient):
             }
 
         post_body = json.dumps({'flavor': post_body})
-        resp, body = self.client.post('flavors', post_body, self.headers)
+        resp, body = self.post('flavors', post_body, self.headers)
 
         body = json.loads(body)
         return resp, body['flavor']
 
     def delete_flavor(self, flavor_id):
         """Deletes the given flavor"""
-        return self.client.delete("flavors/%s" % str(flavor_id))
+        return self.delete("flavors/%s" % str(flavor_id))

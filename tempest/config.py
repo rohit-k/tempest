@@ -177,17 +177,17 @@ class ComputeAdminConfig(BaseConfig):
     @property
     def username(self):
         """Administrative Username to use for Nova API requests."""
-        return self.get("username", "admin")
+        return self.get("username")
 
     @property
     def tenant_name(self):
         """Administrative Tenant name to use for Nova API requests."""
-        return self.get("tenant_name", "admin")
+        return self.get("tenant_name")
 
     @property
     def password(self):
         """API key to use when authenticating as admin."""
-        return self.get("password", "pass")
+        return self.get("password")
 
 
 class ImagesConfig(BaseConfig):

@@ -2,6 +2,7 @@ import unittest2 as unittest
 from nose.plugins.attrib import attr
 from tempest import exceptions
 from tempest import openstack
+from tempest.tests import utils
 
 
 class FlavorsAdminTest(unittest.TestCase):
@@ -15,19 +16,31 @@ class FlavorsAdminTest(unittest.TestCase):
         # Setup Client object for user with admin role
         cls.admin_os = openstack.AdminManager()
         cls.admin_client = cls.admin_os.flavors_client
-
         cls.config = cls.admin_os.config
-        cls.flavor_id = cls.config.compute.flavor_ref
-        cls.flavor_name = 'test_flavor'
-        cls.ram = 512
-        cls.vcpus = 1
-        cls.disk = 10
-        cls.ephemeral = 10
-        cls.new_flavor_id = 1234
-        cls.swap = 1024
-        cls.rxtx = 1
+        cls.admin_username = cls.config.compute_admin.username
+        cls.admin_password = cls.config.compute_admin.password
+        cls.admin_tenant = cls.config.compute_admin.tenant_name
+        cls.admin_user_set = False
+        if cls.admin_username and cls.admin_password and cls.admin_tenant:
+            try:
+                cls.admin_os = openstack.AdminManager()
+                cls.admin_client = cls.admin_os.flavors_client
+            except exceptions.AuthenticationFailure:
+                pass
+            else:
+                cls.admin_user_set = True
+                cls.flavor_id = cls.config.compute.flavor_ref
+                cls.flavor_name = 'test_flavor'
+                cls.ram = 512
+                cls.vcpus = 1
+                cls.disk = 10
+                cls.ephemeral = 10
+                cls.new_flavor_id = 1234
+                cls.swap = 1024
+                cls.rxtx = 1
 
     @attr(type='positive')
+    @utils.skip_unless_attr('admin_user_set', 'Admin user not configured')
     def test_create_flavor(self):
         """Test create flavor and newly created flavor is listed
         This operation requires the user to have 'admin' role"""
@@ -59,6 +72,7 @@ class FlavorsAdminTest(unittest.TestCase):
         self.assertEqual(resp.status, 202)
 
     @attr(type='positive')
+    @utils.skip_unless_attr('admin_user_set', 'Admin user not configured')
     def test_create_flavor_verify_entry_in_list_details(self):
         """Test create flavor and newly created flavor is listed in details
         This operation requires the user to have 'admin' role"""
@@ -83,66 +97,8 @@ class FlavorsAdminTest(unittest.TestCase):
         resp, body = self.admin_client.delete_flavor(self.new_flavor_id)
         self.assertEqual(resp.status, 202)
 
-    @attr(type='positive')
-    def test_list_deleted_flavors(self):
-        """List of all flavors should be blank"""
-
-        # Backup list of flavors
-        resp, flavors = self.admin_client.list_flavors_with_detail()
-        orig_flavors = flavors
-
-        # Delete all flavors
-        for flavor in flavors:
-            self.admin_client.delete_flavor(flavor['id'])
-
-        resp, flavors = self.admin_client.list_flavors()
-        self.assertEqual([], flavors)
-
-        # Re create original flavors
-        for flavor in orig_flavors:
-            if not flavor['swap']:
-                swap = 0
-            else:
-                swap = flavor['swap']
-            resp, _ = self.admin_client.create_flavor(flavor['name'],
-                                        flavor['ram'],
-                                        flavor['vcpus'],
-                                        flavor['disk'],
-                                        flavor['OS-FLV-EXT-DATA:ephemeral'],
-                                        flavor['id'], swap,
-                                        int(flavor['rxtx_factor']))
-            self.assertEqual(200, resp.status)
-
-    @attr(type='positive')
-    def test_list_flavor_details_when_all_flavors_deleted(self):
-        """Detailed List of all flavors should be blank"""
-
-        # Backup list of flavors
-        resp, flavors = self.admin_client.list_flavors_with_detail()
-        orig_flavors = flavors
-
-        # Delete all flavors
-        for flavor in flavors:
-            self.admin_client.delete_flavor(flavor['id'])
-
-        resp, flavors = self.admin_client.list_flavors_with_detail()
-        self.assertEqual([], flavors)
-
-        # Re create original flavors
-        for flavor in orig_flavors:
-            if not flavor['swap']:
-                swap = 0
-            else:
-                swap = flavor['swap']
-            resp, _ = self.admin_client.create_flavor(flavor['name'],
-                                           flavor['ram'],
-                                           flavor['vcpus'], flavor['disk'],
-                                           flavor['OS-FLV-EXT-DATA:ephemeral'],
-                                           flavor['id'], swap,
-                                           int(flavor['rxtx_factor']))
-            self.assertEqual(200, resp.status)
-
     @attr(type='negative')
+    @utils.skip_unless_attr('admin_user_set', 'Admin user not configured')
     def test_get_flavor_details_raises_NotFound_for_deleted_flavor(self):
         """Return error because specified flavor is deleted"""
 
