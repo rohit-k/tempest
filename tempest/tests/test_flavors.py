@@ -1,24 +1,19 @@
-import unittest2 as unittest
 from nose.plugins.attrib import attr
 from tempest import exceptions
-from tempest import openstack
+from base_compute_test import BaseComputeTest
 
 
-class FlavorsTest(unittest.TestCase):
+class FlavorsTest(BaseComputeTest):
 
     @classmethod
     def setUpClass(cls):
-        # Setup Client object for user with admin role
-        cls.os = openstack.Manager()
-        cls.client = cls.os.flavors_client
-        cls.config = cls.os.config
-        cls.flavor_id = cls.config.compute.flavor_ref
+        cls.client = cls.flavors_client
 
     @attr(type='smoke')
     def test_list_flavors(self):
         """List of all flavors should contain the expected flavor"""
         resp, flavors = self.client.list_flavors()
-        resp, flavor = self.client.get_flavor_details(self.flavor_id)
+        resp, flavor = self.client.get_flavor_details(self.flavor_ref)
         flavor_min_detail = {'id': flavor['id'], 'links': flavor['links'],
                              'name': flavor['name']}
         self.assertTrue(flavor_min_detail in flavors)
@@ -27,14 +22,14 @@ class FlavorsTest(unittest.TestCase):
     def test_list_flavors_with_detail(self):
         """Detailed list of all flavors should contain the expected flavor"""
         resp, flavors = self.client.list_flavors_with_detail()
-        resp, flavor = self.client.get_flavor_details(self.flavor_id)
+        resp, flavor = self.client.get_flavor_details(self.flavor_ref)
         self.assertTrue(flavor in flavors)
 
     @attr(type='smoke')
     def test_get_flavor(self):
         """The expected flavor details should be returned"""
-        resp, flavor = self.client.get_flavor_details(self.flavor_id)
-        self.assertEqual(self.flavor_id, str(flavor['id']))
+        resp, flavor = self.client.get_flavor_details(self.flavor_ref)
+        self.assertEqual(self.flavor_ref, str(flavor['id']))
 
     @attr(type='negative')
     def test_get_non_existant_flavor(self):
@@ -124,7 +119,7 @@ class FlavorsTest(unittest.TestCase):
 
     @attr(type='negative')
     def test_get_flavor_details_for_invalid_flavor_id(self):
-        """ Return error because way to specify is inappropriate """
+        """Ensure 404 returned for non-existant flavor ID"""
 
         self.assertRaises(exceptions.NotFound, self.client.get_flavor_details,
                         9999)

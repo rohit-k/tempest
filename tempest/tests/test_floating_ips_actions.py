@@ -1,22 +1,19 @@
 from nose.plugins.attrib import attr
 from tempest import openstack
-import unittest2 as unittest
 from tempest import exceptions
 from tempest.common.utils.data_utils import rand_name
+from base_compute_test import BaseComputeTest
 
 
-class FloatingIPsTest(unittest.TestCase):
+class FloatingIPsTest(BaseComputeTest):
     server_id = None
     floating_ip = None
 
     @classmethod
     def setUpClass(cls):
-        cls.os = openstack.Manager()
-        cls.client = cls.os.floating_ips_client
-        cls.servers_client = cls.os.servers_client
-        cls.config = cls.os.config
-        cls.image_ref = cls.config.compute.image_ref
-        cls.flavor_ref = cls.config.compute.flavor_ref
+        cls.client = cls.floating_ips_client
+        cls.servers_client = cls.servers_client
+
         #Server creation
         resp, server = cls.servers_client.create_server('floating-server',
                                                         cls.image_ref,
@@ -51,16 +48,18 @@ class FloatingIPsTest(unittest.TestCase):
         Positive test:Allocation of a new floating IP to a project
         should be succesfull
         """
-        resp, body = self.client.create_floating_ip()
-        self.assertEqual(200, resp.status)
-        floating_ip_id_allocated = body['id']
-        resp, floating_ip_details = \
+        try:
+            resp, body = self.client.create_floating_ip()
+            self.assertEqual(200, resp.status)
+            floating_ip_id_allocated = body['id']
+            resp, floating_ip_details = \
                 self.client.get_floating_ip_details(floating_ip_id_allocated)
-        #Checking if the details of allocated IP is in list of floating IP
-        resp, body = self.client.list_floating_ips()
-        self.assertTrue(floating_ip_details in body)
-        #Deleting the floating IP which is created in this method
-        self.client.delete_floating_ip(floating_ip_id_allocated)
+            #Checking if the details of allocated IP is in list of floating IP
+            resp, body = self.client.list_floating_ips()
+            self.assertTrue(floating_ip_details in body)
+        finally:
+            #Deleting the floating IP which is created in this method
+            self.client.delete_floating_ip(floating_ip_id_allocated)
 
     @attr(type='positive')
     def test_delete_floating_ip(self):

@@ -1,16 +1,16 @@
 from nose.plugins.attrib import attr
 from tempest import openstack
-import unittest2 as unittest
 from tempest import exceptions
+from base_compute_test import BaseComputeTest
 from tempest.common.utils.data_utils import rand_name
+import unittest2 as unittest
 
 
-class FloatingIPDetailsTest(unittest.TestCase):
+class FloatingIPDetailsTest(BaseComputeTest):
 
     @classmethod
     def setUpClass(cls):
-        cls.os = openstack.Manager()
-        cls.client = cls.os.floating_ips_client
+        cls.client = cls.floating_ips_client
         cls.floating_ip = []
         cls.floating_ip_id = []
         cls.random_number = 0
@@ -39,23 +39,25 @@ class FloatingIPDetailsTest(unittest.TestCase):
     def test_get_floating_ip_details(self):
         """Positive test:Should be able to GET the details of floatingIP"""
         #Creating a floating IP for which details are to be checked
-        resp, body = self.client.create_floating_ip()
-        floating_ip_instance_id = body['instance_id']
-        floating_ip_ip = body['ip']
-        floating_ip_fixed_ip = body['fixed_ip']
-        floating_ip_id = body['id']
-        resp, body = \
-            self.client.get_floating_ip_details(floating_ip_id)
-        self.assertEqual(200, resp.status)
-        #Comparing the details of floating IP
-        self.assertEqual(floating_ip_instance_id,
+        try:
+            resp, body = self.client.create_floating_ip()
+            floating_ip_instance_id = body['instance_id']
+            floating_ip_ip = body['ip']
+            floating_ip_fixed_ip = body['fixed_ip']
+            floating_ip_id = body['id']
+            resp, body = \
+                self.client.get_floating_ip_details(floating_ip_id)
+            self.assertEqual(200, resp.status)
+            #Comparing the details of floating IP
+            self.assertEqual(floating_ip_instance_id,
                             body['instance_id'])
-        self.assertEqual(floating_ip_ip, body['ip'])
-        self.assertEqual(floating_ip_fixed_ip,
+            self.assertEqual(floating_ip_ip, body['ip'])
+            self.assertEqual(floating_ip_fixed_ip,
                             body['fixed_ip'])
-        self.assertEqual(floating_ip_id, body['id'])
+            self.assertEqual(floating_ip_id, body['id'])
         #Deleting the floating IP created in this method
-        self.client.delete_floating_ip(floating_ip_id)
+        finally:
+            self.client.delete_floating_ip(floating_ip_id)
 
     @attr(type='negative')
     @unittest.skip('Skipping until Nova Bug 940500 is fixed')
